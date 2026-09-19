@@ -1,6 +1,6 @@
 import { LLMProvider, ScriptGenerationInput, ScriptGenerationResult, ScenePlanningInput } from "./types";
 
-const GROQ_MODEL = "llama-3.3-70b-versatile";
+const GROQ_MODEL = "openai/gpt-oss-20b";
 const WORDS_PER_MINUTE = 135;
 
 function stripJsonFences(text: string): string {
