@@ -4,6 +4,7 @@ import { getLLMProvider } from "@/lib/providers/llm";
 import { planScenes } from "@/lib/director/scenePlanner";
 import { collectAssets } from "@/lib/director/assetCollector";
 import { generateVoices } from "@/lib/director/voiceGenerator";
+import { buildTimeline } from "@/lib/director/timelineBuilder";
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
@@ -37,13 +38,13 @@ export async function POST(req: NextRequest) {
 
     const scenePlanWithAssets = await collectAssets(jobId, scenePlan);
     const scenePlanWithVoices = await generateVoices(jobId, scenePlanWithAssets);
+    const timeline = buildTimeline(jobId, scenePlanWithVoices);
 
     return NextResponse.json({
-      status: "voices_generated",
+      status: "timeline_built",
       jobId,
       request: result.data,
-      script: scriptResult,
-      scenePlan: scenePlanWithVoices,
+      timeline,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error during generation.";
