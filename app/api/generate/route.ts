@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import path from "path";
+import { execSync } from "child_process";
 import { validateVideoRequest } from "@/types/video-request";
 import { getLLMProvider } from "@/lib/providers/llm";
 import { planScenes } from "@/lib/director/scenePlanner";
 import { collectAssets } from "@/lib/director/assetCollector";
 import { generateVoices } from "@/lib/director/voiceGenerator";
 import { buildTimeline } from "@/lib/director/timelineBuilder";
+import { renderScene } from "@/lib/render/renderScene";
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
@@ -40,11 +43,29 @@ export async function POST(req: NextRequest) {
     const scenePlanWithVoices = await generateVoices(jobId, scenePlanWithAssets);
     const timeline = buildTimeline(jobId, scenePlanWithVoices);
 
-    return NextResponse.json({
-      status: "timeline_built",
+    const videoScene = timeline.scenes.find((s) => s.assetType === "video");
+    const sceneToTest = videoScene || timeline.scenes[0];
+
+    const testOutputPath = path.join(
+      process.cwd(),
+      "tmp",
+      "assets",
       jobId,
-      request: result.data,
-      timeline,
+      `scene-${sceneToTest.scene}-rendered-TEST.mp4`
+    );
+    renderScene(sceneToTest, testOutputPath);
+
+    const probeOutput = execSync(
+      `ffprobe -v error -show_entries stream=width,height,codec_type -show_entries format=duration -of json "${testOutputPath}"`
+    ).toString();
+
+    return NextResponse.json({
+      status: "test_scene_rendered",
+      jobId,
+      testedSceneNumber: sceneToTest.scene,
+      testedAssetType: sceneToTest.assetType,
+      testRenderPath: testOutputPath,
+      testRenderProbe: JSON.parse(probeOutput),
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error during generation.";
