@@ -116,7 +116,7 @@ export default function Home() {
             className="w-full rounded-lg border border-slate-800"
             src={`/api/video/${result.jobId}`}
           />
-          
+          <a
             href={`/api/video/${result.jobId}`}
             download={`${result.title}.mp4`}
             className="text-indigo-400 hover:text-indigo-300 underline"
