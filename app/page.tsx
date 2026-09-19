@@ -1,14 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 type Style = "cinematic" | "educational" | "motivational";
 
-interface GenerateResult {
-  status: string;
-  jobId: string;
-  title: string;
-}
+const STATUS_LABELS: Record<string, string> = {
+  QUEUED: "Queued…",
+  WRITING_SCRIPT: "Writing script…",
+  PLANNING_SCENES: "Planning scenes…",
+  COLLECTING_VISUALS: "Collecting visuals…",
+  GENERATING_VOICE: "Generating voiceover…",
+  RENDERING: "Rendering final video…",
+  COMPLETED: "Done!",
+  FAILED: "Failed",
+};
 
 export default function Home() {
   const [topic, setTopic] = useState("");
@@ -16,13 +21,55 @@ export default function Home() {
   const [style, setStyle] = useState<Style>("cinematic");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<GenerateResult | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [title, setTitle] = useState<string | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  function stopPolling() {
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+  }
+
+  function pollStatus(id: string) {
+    pollRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/status/${id}`);
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "Status check failed.");
+        }
+
+        setStatus(data.status);
+        if (data.title) setTitle(data.title);
+
+        if (data.status === "COMPLETED") {
+          stopPolling();
+          setLoading(false);
+        } else if (data.status === "FAILED") {
+          stopPolling();
+          setLoading(false);
+          setError(data.error || "Generation failed.");
+        }
+      } catch (err) {
+        stopPolling();
+        setLoading(false);
+        setError(err instanceof Error ? err.message : "Something went wrong.");
+      }
+    }, 4000);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    setResult(null);
+    setStatus("QUEUED");
+    setJobId(null);
+    setTitle(null);
+    stopPolling();
 
     try {
       const res = await fetch("/api/generate", {
@@ -42,10 +89,10 @@ export default function Home() {
         throw new Error(data.error || data.errors?.[0]?.message || "Generation failed.");
       }
 
-      setResult(data);
+      setJobId(data.jobId);
+      pollStatus(data.jobId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
-    } finally {
       setLoading(false);
     }
   }
@@ -98,9 +145,16 @@ export default function Home() {
           disabled={loading}
           className="mt-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:cursor-not-allowed rounded-lg py-3 font-semibold transition"
         >
-          {loading ? "Generating… this can take a few minutes" : "Generate Video"}
+          {loading ? "Generating…" : "Generate Video"}
         </button>
       </form>
+
+      {loading && status && (
+        <div className="mt-8 w-full max-w-md flex flex-col items-center gap-2">
+          <div className="w-6 h-6 border-2 border-slate-600 border-t-indigo-500 rounded-full animate-spin" />
+          <p className="text-slate-300">{STATUS_LABELS[status] || status}</p>
+        </div>
+      )}
 
       {error && (
         <div className="mt-8 w-full max-w-md bg-red-950 border border-red-800 text-red-200 rounded-lg p-4">
@@ -108,17 +162,17 @@ export default function Home() {
         </div>
       )}
 
-      {result && (
+      {!loading && status === "COMPLETED" && jobId && (
         <div className="mt-10 w-full max-w-2xl flex flex-col items-center gap-4">
-          <h2 className="text-xl font-semibold">{result.title}</h2>
+          <h2 className="text-xl font-semibold">{title}</h2>
           <video
             controls
             className="w-full rounded-lg border border-slate-800"
-            src={`/api/video/${result.jobId}`}
+            src={`/api/video/${jobId}`}
           />
           <a
-            href={`/api/video/${result.jobId}`}
-            download={`${result.title}.mp4`}
+            href={`/api/video/${jobId}`}
+            download={`${title}.mp4`}
             className="text-indigo-400 hover:text-indigo-300 underline"
           >
             Download MP4
