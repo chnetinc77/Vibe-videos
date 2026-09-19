@@ -4,6 +4,7 @@ import { validateVideoRequest } from "@/types/video-request";
 import { getLLMProvider } from "@/lib/providers/llm";
 import { planScenes } from "@/lib/director/scenePlanner";
 import { collectAssets } from "@/lib/director/assetCollector";
+import { generateAiImages } from "@/lib/director/imageGenerator";
 import { generateVoices } from "@/lib/director/voiceGenerator";
 import { buildTimeline } from "@/lib/director/timelineBuilder";
 import { renderFinalVideo } from "@/lib/render/renderFinalVideo";
@@ -38,8 +39,9 @@ export async function POST(req: NextRequest) {
 
     const jobId = `job-${Date.now()}`;
 
-    const scenePlanWithAssets = await collectAssets(jobId, scenePlan);
-    const scenePlanWithVoices = await generateVoices(jobId, scenePlanWithAssets);
+    const scenePlanWithStock = await collectAssets(jobId, scenePlan);
+    const scenePlanWithImages = await generateAiImages(jobId, scenePlanWithStock);
+    const scenePlanWithVoices = await generateVoices(jobId, scenePlanWithImages);
     const timeline = buildTimeline(jobId, scenePlanWithVoices);
 
     const finalVideoPath = renderFinalVideo(jobId, timeline);

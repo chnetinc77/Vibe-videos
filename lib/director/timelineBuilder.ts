@@ -29,6 +29,7 @@ export function buildTimeline(jobId: string, scenePlan: ScenePlan): Timeline {
       narration: scene.narration,
       assetPath,
       assetType,
+      visualType: scene.visual_type,
       voicePath: scene.voice_path,
       textOverlay: scene.text_overlay,
       transition: scene.transition,

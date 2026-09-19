@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { getStockProvider } from "@/lib/providers/stock";
+import { getStockProvider, getFallbackStockProvider } from "@/lib/providers/stock";
 import type { ScenePlan } from "@/types/scene-plan";
 
 const ASSETS_DIR = path.join(process.cwd(), "tmp", "assets");
@@ -19,10 +19,15 @@ export async function collectAssets(jobId: string, scenePlan: ScenePlan): Promis
   fs.mkdirSync(jobDir, { recursive: true });
 
   const stock = getStockProvider();
+  const fallbackStock = getFallbackStockProvider();
 
   for (const scene of scenePlan.scenes) {
     if (scene.visual_type === "stock") {
-      const result = await stock.searchVideo(scene.search_query, scene.duration);
+      let result = await stock.searchVideo(scene.search_query, scene.duration);
+
+      if (!result && fallbackStock) {
+        result = await fallbackStock.searchVideo(scene.search_query, scene.duration);
+      }
 
       if (!result) {
         throw new Error(
