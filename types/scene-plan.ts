@@ -10,6 +10,8 @@ export interface Scene {
   text_overlay: string;
   transition: string;
   asset_path?: string;
+  voice_path?: string;
+  actual_voice_duration?: number;
 }
 
 export interface ScenePlan {

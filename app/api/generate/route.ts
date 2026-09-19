@@ -3,6 +3,7 @@ import { validateVideoRequest } from "@/types/video-request";
 import { getLLMProvider } from "@/lib/providers/llm";
 import { planScenes } from "@/lib/director/scenePlanner";
 import { collectAssets } from "@/lib/director/assetCollector";
+import { generateVoices } from "@/lib/director/voiceGenerator";
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
@@ -33,14 +34,16 @@ export async function POST(req: NextRequest) {
     );
 
     const jobId = `job-${Date.now()}`;
+
     const scenePlanWithAssets = await collectAssets(jobId, scenePlan);
+    const scenePlanWithVoices = await generateVoices(jobId, scenePlanWithAssets);
 
     return NextResponse.json({
-      status: "assets_collected",
+      status: "voices_generated",
       jobId,
       request: result.data,
       script: scriptResult,
-      scenePlan: scenePlanWithAssets,
+      scenePlan: scenePlanWithVoices,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error during generation.";
