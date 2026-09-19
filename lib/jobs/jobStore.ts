@@ -1,6 +1,7 @@
 export type JobStatus =
   | "QUEUED"
   | "WRITING_SCRIPT"
+  | "SCRIPT_READY"
   | "PLANNING_SCENES"
   | "COLLECTING_VISUALS"
   | "GENERATING_VOICE"
@@ -12,6 +13,8 @@ export interface JobRecord {
   jobId: string;
   status: JobStatus;
   title?: string;
+  script?: string;
+  durationSeconds?: number;
   error?: string;
   createdAt: number;
   updatedAt: number;

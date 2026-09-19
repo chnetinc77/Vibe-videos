@@ -24,3 +24,97 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ===== Luxury redesign ===== */
+:root { --gold: #d4af6a; --ink: #07070a; }
+html { background: var(--ink); color-scheme: dark; }
+body {
+  background: transparent !important;
+  color: #f4f1ea !important;
+  font-family: ui-sans-serif, -apple-system, "SF Pro Text", "Segoe UI", system-ui, sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(60% 45% at 50% 38%, rgba(212,175,106,.16), transparent 70%),
+    radial-gradient(40% 30% at 85% 90%, rgba(120,100,255,.08), transparent 70%);
+}
+body::after {
+  content: ""; position: fixed; inset: 0; z-index: 50; pointer-events: none; opacity: .06;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+}
+::selection { background: rgba(212,175,106,.35); }
+
+h1 {
+  font-family: ui-serif, "New York", "Iowan Old Style", "Palatino Linotype", Georgia, serif !important;
+  font-weight: 400 !important; letter-spacing: -.02em; line-height: 1.05;
+  font-size: clamp(2.5rem, 9vw, 4.25rem) !important;
+  background: linear-gradient(180deg, #fff 30%, #cdbf9f 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent !important;
+}
+h1 + p { color: rgba(244,241,234,.5) !important; letter-spacing: .03em; }
+label {
+  text-transform: uppercase; font-size: .7rem !important; letter-spacing: .16em;
+  color: rgba(244,241,234,.45) !important;
+}
+
+textarea, input, select {
+  background-color: rgba(255,255,255,.035) !important;
+  border: 1px solid rgba(255,255,255,.09) !important;
+  border-radius: 18px !important;
+  color: #f4f1ea !important;
+  padding: 1rem 1.15rem !important;
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  outline: none !important;
+  transition: border-color .25s, box-shadow .25s;
+}
+textarea { line-height: 1.6 !important; }
+textarea::placeholder, input::placeholder { color: rgba(244,241,234,.3); }
+textarea:focus, input:focus, select:focus {
+  border-color: rgba(212,175,106,.55) !important;
+  box-shadow: 0 0 0 4px rgba(212,175,106,.08), 0 10px 40px -10px rgba(212,175,106,.25);
+}
+select {
+  -webkit-appearance: none; appearance: none; padding-right: 2.5rem !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23d4af6a' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 1rem center; background-size: .8rem;
+}
+
+button {
+  background: linear-gradient(135deg, #e6c98a, #b8924a) !important;
+  color: #15110a !important; border: 0 !important;
+  border-radius: 999px !important; font-weight: 600 !important; letter-spacing: .04em;
+  padding: 1rem 1.5rem !important; cursor: pointer;
+  box-shadow: 0 10px 30px -10px rgba(212,175,106,.6), inset 0 1px 0 rgba(255,255,255,.35);
+  transition: filter .25s, box-shadow .25s;
+}
+button:hover:not(:disabled) {
+  filter: brightness(1.08);
+  box-shadow: 0 14px 40px -8px rgba(212,175,106,.75), inset 0 1px 0 rgba(255,255,255,.4);
+}
+button:disabled { opacity: .5; cursor: not-allowed; }
+
+video {
+  border-radius: 20px; border: 1px solid rgba(255,255,255,.08);
+  box-shadow: 0 30px 80px -30px rgba(0,0,0,.9);
+}
+[class*="red-"] {
+  background-color: rgba(255,90,90,.06) !important;
+  border: 1px solid rgba(255,120,120,.25) !important;
+  border-radius: 16px !important;
+}
+[class*="red-"], [class*="red-"] * { color: #f2c9c9 !important; }
+
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } }
+h1, h1 + p, textarea, input, select, label, button, video, [class*="red-"] {
+  animation: rise .7s cubic-bezier(.2,.7,.2,1) backwards;
+}
+h1 + p { animation-delay: .08s; }
+textarea, label, input, select { animation-delay: .16s; }
+button { animation-delay: .24s; }
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
