@@ -10,6 +10,14 @@ export interface ScriptGenerationResult {
   wordCount: number;
 }
 
+export interface ScenePlanningInput {
+  title: string;
+  script: string;
+  durationSeconds: number;
+  budget: "balanced";
+}
+
 export interface LLMProvider {
   generateScript(input: ScriptGenerationInput): Promise<ScriptGenerationResult>;
+  planScenes(input: ScenePlanningInput): Promise<unknown>;
 }
