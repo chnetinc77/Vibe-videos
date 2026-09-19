@@ -9,6 +9,7 @@ export interface Scene {
   search_query: string;
   text_overlay: string;
   transition: string;
+  asset_path?: string;
 }
 
 export interface ScenePlan {

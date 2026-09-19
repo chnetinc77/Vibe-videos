@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateVideoRequest } from "@/types/video-request";
 import { getLLMProvider } from "@/lib/providers/llm";
 import { planScenes } from "@/lib/director/scenePlanner";
+import { collectAssets } from "@/lib/director/assetCollector";
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
@@ -31,11 +32,15 @@ export async function POST(req: NextRequest) {
       result.data.durationSeconds
     );
 
+    const jobId = `job-${Date.now()}`;
+    const scenePlanWithAssets = await collectAssets(jobId, scenePlan);
+
     return NextResponse.json({
-      status: "scene_plan_generated",
+      status: "assets_collected",
+      jobId,
       request: result.data,
       script: scriptResult,
-      scenePlan,
+      scenePlan: scenePlanWithAssets,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error during generation.";
