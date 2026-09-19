@@ -25,7 +25,7 @@ export class GroqProvider implements LLMProvider {
         model: GROQ_MODEL,
         messages: [{ role: "user", content: prompt }],
         temperature: 0.7,
-        max_tokens: 4096,
+        max_tokens: 8192,
         reasoning_effort: "low",
       }),
     });
