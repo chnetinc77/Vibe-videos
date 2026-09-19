@@ -50,9 +50,14 @@ export class GroqProvider implements LLMProvider {
 
     const prompt = `You are a documentary scriptwriter. Write a factual, ${input.style} narration script about: "${input.topic}".
 
+CRITICAL ACCURACY RULE: You are a smaller model with limited knowledge of specific people, companies, and recent events. If you are not highly confident about a specific fact (a name, date, company, statistic, or event), do NOT state it as if certain. Instead:
+- Prefer general, verifiably-safe statements over specific claims you're unsure of.
+- Never invent or guess a specific detail (a founding year, an investor name, a title) to fill a gap — omit it instead.
+- If you are not confident you know who or what the subject actually is, say so implicitly by keeping the script general rather than fabricating a plausible-sounding but incorrect backstory.
+- It is far better to produce a shorter, more general, but ACCURATE script than a detailed but partially invented one.
+
 Requirements:
 - Target length: approximately ${targetWords} words (for a ${Math.round(input.durationSeconds / 60)}-minute video)
-- Factual and accurate — do not invent statistics, quotes, or events
 - Written as continuous narration text, not a list of scenes
 - No stage directions, no scene numbers, no visual descriptions — narration text only
 - Start with a strong hook in the first sentence
@@ -100,12 +105,13 @@ Break this script into scenes. For EACH scene, decide the cheapest visual that s
 
 Rules:
 - Split the narration into natural scene breaks, each roughly 5-12 seconds of spoken narration.
-- Every scene's narration text, concatenated in order, must reconstruct the full original script.
+- Every scene's narration text, concatenated in order, must reconstruct the full original script exactly — do not shorten, summarize, or drop any scene's narration.
 - "search_query" is a short stock-footage search phrase (used only when visual_type is "stock").
-- "visual_prompt" is a detailed image/video generation prompt (used only when visual_type is "ai_image" or "ai_video"; empty string otherwise).
+- "visual_prompt" is a detailed image/video generation prompt (used only when visual_type is "ai_image" or "ai_video"; empty string otherwise). Keep prompts to general visual concepts — do not invent specific claimed facts (like a specific building, product, or logo) you aren't certain are accurate.
 - "text_overlay" is a short on-screen text for the scene, or empty string if none needed.
 - "transition" is one of: "cut", "fade", "dissolve".
 - Scene durations should sum to approximately ${input.durationSeconds} seconds.
+- Every scene object must include ALL fields, fully filled in — never leave narration or any other field empty or missing.
 
 Respond ONLY with valid JSON, no markdown fences, no extra text, in this exact format:
 {
