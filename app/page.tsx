@@ -154,7 +154,7 @@ export default function Home() {
         <div className="w-full max-w-md flex flex-col gap-4">
           <button
             onClick={() => setMode("quick")}
-            className="text-left bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg p-5 transition"
+            className="text-left bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg p-5 transition text-slate-100"
           >
             <div className="font-semibold text-lg mb-1">⚡ Quick Generate</div>
             <div className="text-sm text-slate-400">
@@ -164,7 +164,7 @@ export default function Home() {
 
           <button
             onClick={() => setMode("review")}
-            className="text-left bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg p-5 transition"
+            className="text-left bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg p-5 transition text-slate-100"
           >
             <div className="font-semibold text-lg mb-1">📝 Write &amp; Review Script</div>
             <div className="text-sm text-slate-400">

@@ -119,5 +119,52 @@ button { animation-delay: .24s; }
   * { animation: none !important; transition: none !important; }
 }
 
+/* ===== Mode cards ===== */
+button:has(h2), button:has(h3), button:has(p), a:has(h2), a:has(h3), [role="button"] {
+  background: rgba(255,255,255,.035) !important;
+  color: #f4f1ea !important;
+  border: 1px solid rgba(212,175,106,.22) !important;
+  border-radius: 22px !important;
+  box-shadow: none !important;
+  text-align: left; letter-spacing: 0; font-weight: 400 !important;
+  padding: 1.4rem 1.5rem !important;
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  transition: border-color .25s, transform .25s, box-shadow .25s;
+}
+button:has(h2):hover, button:has(h3):hover, button:has(p):hover, a:has(h2):hover, a:has(h3):hover, [role="button"]:hover {
+  border-color: rgba(212,175,106,.6) !important;
+  transform: translateY(-2px);
+  filter: none !important;
+  box-shadow: 0 18px 50px -20px rgba(212,175,106,.35) !important;
+}
 
-
+/* ===== Mode cards v2 ===== */
+button:has(*) {
+  background: rgba(255,255,255,.035) !important;
+  border: 1px solid rgba(212,175,106,.22) !important;
+  border-radius: 22px !important;
+  box-shadow: none !important;
+  filter: none !important;
+  text-align: left !important;
+  font-weight: 400 !important;
+  letter-spacing: 0 !important;
+  padding: 1.4rem 1.5rem !important;
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  transition: border-color .25s, transform .25s, box-shadow .25s;
+}
+button:has(*) * {
+  color: rgba(244,241,234,.55) !important;
+  font-weight: 400 !important;
+  letter-spacing: 0 !important;
+}
+button:has(*) > :first-child,
+button:has(*) > :first-child * {
+  color: #f4f1ea !important;
+  font-weight: 500 !important;
+}
+button:has(*):hover:not(:disabled) {
+  border-color: rgba(212,175,106,.6) !important;
+  transform: translateY(-2px);
+  filter: none !important;
+  box-shadow: 0 18px 50px -20px rgba(212,175,106,.35) !important;
+}
