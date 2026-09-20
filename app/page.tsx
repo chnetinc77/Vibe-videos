@@ -16,8 +16,23 @@ const STATUS_LABELS: Record<string, string> = {
   FAILED: "Failed",
 };
 
+const MODES: { id: Mode; icon: string; title: string; desc: string }[] = [
+  {
+    id: "quick",
+    icon: "⚡",
+    title: "Quick Generate",
+    desc: "Give a short idea and get the finished video automatically — no review steps.",
+  },
+  {
+    id: "review",
+    icon: "📝",
+    title: "Write & Review Script",
+    desc: "The AI writes a script from your idea (or you provide your own exact script) — you read and edit it before the video is generated.",
+  },
+];
+
 export default function Home() {
-  const [mode, setMode] = useState<Mode | null>(null);
+  const [mode, setMode] = useState<Mode>("quick");
   const [topic, setTopic] = useState("");
   const [durationMinutes, setDurationMinutes] = useState(1);
   const [style, setStyle] = useState<Style>("cinematic");
@@ -34,6 +49,14 @@ export default function Home() {
   const [reviewTitle, setReviewTitle] = useState("");
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const customActive = mode === "review" && useCustomScript;
+
+  function selectMode(m: Mode) {
+    if (loading) return;
+    setMode(m);
+    if (m === "quick") setUseCustomScript(false);
+  }
 
   function stopPolling() {
     if (pollRef.current) {
@@ -91,7 +114,7 @@ export default function Home() {
           durationSeconds: durationMinutes * 60,
           style,
           budget: "balanced",
-          script: useCustomScript ? customScript : undefined,
+          script: customActive ? customScript : undefined,
           autoApprove: mode === "quick",
         }),
       });
@@ -132,7 +155,7 @@ export default function Home() {
 
   function resetToStart() {
     stopPolling();
-    setMode(null);
+    setMode("quick");
     setTopic("");
     setUseCustomScript(false);
     setCustomScript("");
@@ -150,75 +173,93 @@ export default function Home() {
       <h1 className="text-3xl font-bold mb-2">AI Video Director</h1>
       <p className="text-slate-400 mb-10">What do you want to make?</p>
 
-      {mode === null && (
-        <div className="w-full max-w-md flex flex-col gap-4">
-          <button
-            onClick={() => setMode("quick")}
-            className="text-left bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg p-5 transition text-slate-100"
-          >
-            <div className="font-semibold text-lg mb-1">⚡ Quick Generate</div>
-            <div className="text-sm text-slate-400">
-              Give a short idea and get the finished video automatically — no review steps.
-            </div>
-          </button>
-
-          <button
-            onClick={() => setMode("review")}
-            className="text-left bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg p-5 transition text-slate-100"
-          >
-            <div className="font-semibold text-lg mb-1">📝 Write &amp; Review Script</div>
-            <div className="text-sm text-slate-400">
-              The AI writes a script from your idea (or you provide your own exact script) —
-              you read and edit it before the video is generated.
-            </div>
-          </button>
-        </div>
-      )}
-
-      {mode !== null && !jobId && (
+      {!jobId && (
         <form onSubmit={handleSubmit} className="w-full max-w-md flex flex-col gap-4">
-          <button
-            type="button"
-            onClick={() => setMode(null)}
-            className="text-sm text-slate-500 hover:text-slate-300 self-start"
-          >
-            ← Back
-          </button>
+          <div role="radiogroup" aria-label="Mode" className="flex flex-col gap-4">
+            {MODES.map((m) => {
+              const active = mode === m.id;
+              return (
+                <div
+                  key={m.id}
+                  role="radio"
+                  aria-checked={active}
+                  tabIndex={0}
+                  onClick={() => selectMode(m.id)}
+                  onKeyDown={(e) => {
+                    if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) {
+                      e.preventDefault();
+                      selectMode(m.id);
+                    }
+                  }}
+                  className="text-left p-5 cursor-pointer transition"
+                  style={{
+                    borderRadius: 22,
+                    background: active ? "rgba(212,175,106,.06)" : "rgba(255,255,255,.035)",
+                    border: active
+                      ? "1px solid rgba(212,175,106,.6)"
+                      : "1px solid rgba(255,255,255,.09)",
+                    boxShadow: active ? "0 18px 50px -24px rgba(212,175,106,.4)" : "none",
+                    backdropFilter: "blur(14px)",
+                    WebkitBackdropFilter: "blur(14px)",
+                  }}
+                >
+                  <div className="font-semibold text-lg mb-1">
+                    {m.icon} {m.title}
+                  </div>
+                  <div className="text-sm text-slate-400">{m.desc}</div>
 
-          {mode === "review" && (
-            <label className="flex items-center gap-2 text-sm text-slate-400">
-              <input
-                type="checkbox"
-                checked={useCustomScript}
-                onChange={(e) => setUseCustomScript(e.target.checked)}
-              />
-              I want to provide my own exact script instead of having the AI write one
-            </label>
-          )}
+                  {active && (
+                    <div className="mt-4 flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
+                      <textarea
+                        value={topic}
+                        onChange={(e) => setTopic(e.target.value)}
+                        placeholder={
+                          customActive
+                            ? "Give this video a title"
+                            : "e.g. Create a documentary about Figure AI and Brett Adcock"
+                        }
+                        rows={customActive ? 1 : 3}
+                        required
+                        minLength={3}
+                        className="w-full resize-none"
+                      />
 
-          <textarea
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            placeholder={
-              useCustomScript
-                ? "Give this video a title"
-                : "e.g. Create a documentary about Figure AI and Brett Adcock"
-            }
-            rows={useCustomScript ? 1 : 3}
-            required
-            minLength={3}
-            className="bg-slate-900 border border-slate-700 rounded-lg p-3 resize-none focus:outline-none focus:border-slate-400"
-          />
+                      {customActive && (
+                        <textarea
+                          value={customScript}
+                          onChange={(e) => setCustomScript(e.target.value)}
+                          placeholder="Paste your exact narration script here…"
+                          rows={6}
+                          className="w-full resize-none"
+                        />
+                      )}
 
-          {useCustomScript && (
-            <textarea
-              value={customScript}
-              onChange={(e) => setCustomScript(e.target.value)}
-              placeholder="Paste your exact narration script here…"
-              rows={6}
-              className="bg-slate-900 border border-slate-700 rounded-lg p-3 resize-none focus:outline-none focus:border-slate-400"
-            />
-          )}
+                      {m.id === "review" && (
+                        <div
+                          role="checkbox"
+                          aria-checked={useCustomScript}
+                          tabIndex={0}
+                          onClick={() => setUseCustomScript((v) => !v)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              setUseCustomScript((v) => !v);
+                            }
+                          }}
+                          className="text-sm cursor-pointer select-none"
+                          style={{ color: "rgba(212,175,106,.85)" }}
+                        >
+                          {useCustomScript
+                            ? "− Let the AI write the script instead"
+                            : "+ I have my own exact script"}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
 
           <div className="flex gap-4">
             <div className="flex-1">
@@ -232,7 +273,7 @@ export default function Home() {
                 className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 focus:outline-none focus:border-slate-400"
               />
             </div>
-            {!useCustomScript && (
+            {!customActive && (
               <div className="flex-1">
                 <label className="block text-sm text-slate-400 mb-1">Style</label>
                 <select
