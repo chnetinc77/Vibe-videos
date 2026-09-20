@@ -6,6 +6,7 @@ export interface VideoRequest {
   durationSeconds: number;
   style: VideoStyle;
   budget: VideoBudget;
+  script?: string;
 }
 
 export interface VideoRequestValidationError {
@@ -18,8 +19,8 @@ export function validateVideoRequest(
 ): { valid: true; data: VideoRequest } | { valid: false; errors: VideoRequestValidationError[] } {
   const errors: VideoRequestValidationError[] = [];
 
-  if (!input.topic || input.topic.trim().length < 5) {
-    errors.push({ field: "topic", message: "Topic must be at least 5 characters." });
+  if (!input.topic || input.topic.trim().length < 3) {
+    errors.push({ field: "topic", message: "Topic/title must be at least 3 characters." });
   }
 
   if (
@@ -43,6 +44,10 @@ export function validateVideoRequest(
     errors.push({ field: "budget", message: "Budget must be one of: " + validBudgets.join(", ") });
   }
 
+  if (input.script !== undefined && input.script.trim().length < 20) {
+    errors.push({ field: "script", message: "Custom script must be at least 20 characters if provided." });
+  }
+
   if (errors.length > 0) {
     return { valid: false, errors };
   }
@@ -54,6 +59,7 @@ export function validateVideoRequest(
       durationSeconds: input.durationSeconds!,
       style: input.style!,
       budget: input.budget!,
+      script: input.script?.trim(),
     },
   };
 }
