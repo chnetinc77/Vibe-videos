@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 
 type Style = "cinematic" | "educational" | "motivational";
+type Mode = "quick" | "review";
 
 const STATUS_LABELS: Record<string, string> = {
   QUEUED: "Queued…",
@@ -16,12 +17,12 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export default function Home() {
+  const [mode, setMode] = useState<Mode | null>(null);
   const [topic, setTopic] = useState("");
   const [durationMinutes, setDurationMinutes] = useState(1);
   const [style, setStyle] = useState<Style>("cinematic");
   const [useCustomScript, setUseCustomScript] = useState(false);
   const [customScript, setCustomScript] = useState("");
-  const [autoApprove, setAutoApprove] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +47,6 @@ export default function Home() {
       try {
         const res = await fetch(`/api/status/${id}`);
         const data = await res.json();
-
         if (!res.ok) throw new Error(data.error || "Status check failed.");
 
         setStatus(data.status);
@@ -92,7 +92,7 @@ export default function Home() {
           style,
           budget: "balanced",
           script: useCustomScript ? customScript : undefined,
-          autoApprove,
+          autoApprove: mode === "quick",
         }),
       });
 
@@ -130,6 +130,19 @@ export default function Home() {
     }
   }
 
+  function resetToStart() {
+    stopPolling();
+    setMode(null);
+    setTopic("");
+    setUseCustomScript(false);
+    setCustomScript("");
+    setLoading(false);
+    setError(null);
+    setStatus(null);
+    setJobId(null);
+    setTitle(null);
+  }
+
   const awaitingReview = status === "SCRIPT_READY" && !loading;
 
   return (
@@ -137,17 +150,75 @@ export default function Home() {
       <h1 className="text-3xl font-bold mb-2">AI Video Director</h1>
       <p className="text-slate-400 mb-10">What do you want to make?</p>
 
-      {!jobId && (
+      {mode === null && (
+        <div className="w-full max-w-md flex flex-col gap-4">
+          <button
+            onClick={() => setMode("quick")}
+            className="text-left bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg p-5 transition"
+          >
+            <div className="font-semibold text-lg mb-1">⚡ Quick Generate</div>
+            <div className="text-sm text-slate-400">
+              Give a short idea and get the finished video automatically — no review steps.
+            </div>
+          </button>
+
+          <button
+            onClick={() => setMode("review")}
+            className="text-left bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg p-5 transition"
+          >
+            <div className="font-semibold text-lg mb-1">📝 Write &amp; Review Script</div>
+            <div className="text-sm text-slate-400">
+              The AI writes a script from your idea (or you provide your own exact script) —
+              you read and edit it before the video is generated.
+            </div>
+          </button>
+        </div>
+      )}
+
+      {mode !== null && !jobId && (
         <form onSubmit={handleSubmit} className="w-full max-w-md flex flex-col gap-4">
+          <button
+            type="button"
+            onClick={() => setMode(null)}
+            className="text-sm text-slate-500 hover:text-slate-300 self-start"
+          >
+            ← Back
+          </button>
+
+          {mode === "review" && (
+            <label className="flex items-center gap-2 text-sm text-slate-400">
+              <input
+                type="checkbox"
+                checked={useCustomScript}
+                onChange={(e) => setUseCustomScript(e.target.checked)}
+              />
+              I want to provide my own exact script instead of having the AI write one
+            </label>
+          )}
+
           <textarea
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            placeholder="e.g. Create a documentary about Figure AI and Brett Adcock"
-            rows={3}
+            placeholder={
+              useCustomScript
+                ? "Give this video a title"
+                : "e.g. Create a documentary about Figure AI and Brett Adcock"
+            }
+            rows={useCustomScript ? 1 : 3}
             required
             minLength={3}
             className="bg-slate-900 border border-slate-700 rounded-lg p-3 resize-none focus:outline-none focus:border-slate-400"
           />
+
+          {useCustomScript && (
+            <textarea
+              value={customScript}
+              onChange={(e) => setCustomScript(e.target.value)}
+              placeholder="Paste your exact narration script here…"
+              rows={6}
+              className="bg-slate-900 border border-slate-700 rounded-lg p-3 resize-none focus:outline-none focus:border-slate-400"
+            />
+          )}
 
           <div className="flex gap-4">
             <div className="flex-1">
@@ -161,47 +232,21 @@ export default function Home() {
                 className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 focus:outline-none focus:border-slate-400"
               />
             </div>
-            <div className="flex-1">
-              <label className="block text-sm text-slate-400 mb-1">Style</label>
-              <select
-                value={style}
-                onChange={(e) => setStyle(e.target.value as Style)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 focus:outline-none focus:border-slate-400"
-              >
-                <option value="cinematic">Cinematic</option>
-                <option value="educational">Educational</option>
-                <option value="motivational">Motivational</option>
-              </select>
-            </div>
+            {!useCustomScript && (
+              <div className="flex-1">
+                <label className="block text-sm text-slate-400 mb-1">Style</label>
+                <select
+                  value={style}
+                  onChange={(e) => setStyle(e.target.value as Style)}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 focus:outline-none focus:border-slate-400"
+                >
+                  <option value="cinematic">Cinematic</option>
+                  <option value="educational">Educational</option>
+                  <option value="motivational">Motivational</option>
+                </select>
+              </div>
+            )}
           </div>
-
-          <label className="flex items-center gap-2 text-sm text-slate-400">
-            <input
-              type="checkbox"
-              checked={useCustomScript}
-              onChange={(e) => setUseCustomScript(e.target.checked)}
-            />
-            I want to provide my own exact script
-          </label>
-
-          {useCustomScript && (
-            <textarea
-              value={customScript}
-              onChange={(e) => setCustomScript(e.target.value)}
-              placeholder="Paste your exact narration script here…"
-              rows={6}
-              className="bg-slate-900 border border-slate-700 rounded-lg p-3 resize-none focus:outline-none focus:border-slate-400"
-            />
-          )}
-
-          <label className="flex items-center gap-2 text-sm text-slate-400">
-            <input
-              type="checkbox"
-              checked={autoApprove}
-              onChange={(e) => setAutoApprove(e.target.checked)}
-            />
-            Skip review — generate the whole video automatically
-          </label>
 
           <button
             type="submit"
@@ -264,6 +309,12 @@ export default function Home() {
           >
             Download MP4
           </a>
+          <button
+            onClick={resetToStart}
+            className="text-sm text-slate-500 hover:text-slate-300"
+          >
+            Make another video
+          </button>
         </div>
       )}
     </main>
